@@ -22,25 +22,29 @@ BATCH_FILES = {}
 async def start(client, message):
     if message.chat.type in [enums.ChatType.GROUP, enums.ChatType.SUPERGROUP]:
         buttons = [[
-                    InlineKeyboardButton('🛡 Uᴘᴅᴀᴛᴇ', url=f"t.me/Devilservers"),
-                    InlineKeyboardButton('🧑🏻‍💻 Dᴇᴠᴇʟᴏᴘᴇʀ', url=f"t.me/takinggbot")
-                  ]]
+            InlineKeyboardButton('🛡 Uᴘᴅᴀᴛᴇ', url=f"t.me/Devilservers"),
+            InlineKeyboardButton('🧑🏻‍💻 Dᴇᴠᴇʟᴏᴘᴇʀ', url=f"t.me/takinggbot")
+        ]]
         reply_markup = InlineKeyboardMarkup(buttons)
-        await message.reply(script.START_TXT.format(message.from_user.mention if message.from_user else message.chat.title, temp.U_NAME, temp.B_NAME), reply_markup=reply_markup)
+        await message.reply(
+            script.START_TXT.format(message.from_user.mention if message.from_user else message.chat.title, temp.U_NAME, temp.B_NAME),
+            reply_markup=reply_markup
+        )
         await asyncio.sleep(2)
         if not await db.get_chat(message.chat.id):
-            total=await client.get_chat_members_count(message.chat.id)
-            await client.send_message(LOG_CHANNEL, script.LOG_TEXT_G.format(message.chat.title, message.chat.id, total, "Unknown"))       
+            total = await client.get_chat_members_count(message.chat.id)
+            await client.send_message(LOG_CHANNEL, script.LOG_TEXT_G.format(message.chat.title, message.chat.id, total, "Unknown"))
             await db.add_chat(message.chat.id, message.chat.title)
-        return 
+        return
+
     if not await db.is_user_exist(message.from_user.id):
         await db.add_user(message.from_user.id, message.from_user.first_name)
         await client.send_message(LOG_CHANNEL, script.LOG_TEXT_P.format(message.from_user.id, message.from_user.mention))
     if len(message.command) != 2:
         buttons = [[
-                    InlineKeyboardButton('🛡 Uᴘᴅᴀᴛᴇ', url=f"t.me/Devilservers"),
-                    InlineKeyboardButton('🧑🏻‍💻 Dᴇᴠᴇʟᴏᴘᴇʀ', url=f"t.me/takinggbot")
-                  ]]
+            InlineKeyboardButton('🛡 Uᴘᴅᴀᴛᴇ', url=f"t.me/Devilservers"),
+            InlineKeyboardButton('🧑🏻‍💻 Dᴇᴠᴇʟᴏᴘᴇʀ', url=f"t.me/takinggbot")
+        ]]
         reply_markup = InlineKeyboardMarkup(buttons)
         await message.reply_photo(
             photo=random.choice(PICS),
@@ -49,6 +53,7 @@ async def start(client, message):
             parse_mode=enums.ParseMode.HTML
         )
         return
+
     if AUTH_CHANNEL and not await is_subscribed(client, message):
         try:
             invite_link = await client.create_chat_invite_link(int(AUTH_CHANNEL))
@@ -62,26 +67,26 @@ async def start(client, message):
                 )
             ]
         ]
-
         if message.command[1] != "subscribe" or message.command[1] != "send_all":
             try:
                 kk, file_id = message.command[1].split("_", 1)
-                pre = 'checksubp' if kk == 'filep' else 'checksub' 
+                pre = 'checksubp' if kk == 'filep' else 'checksub'
                 btn.append([InlineKeyboardButton("🔄 𝖳𝗋𝗒 𝖠𝗀𝖺𝗂𝗇 🔄", callback_data=f"{pre}#{file_id}")])
             except (IndexError, ValueError):
-                btn.append([InlineKeyboardButton("🔄 𝖳𝗋𝗒 𝖠𝗀𝖺𝗂𝗇 🔄", url=f"https://t.me/{temp.U_NAME}?start={message.command[1]}")])
+                btn.append([InlineKeyboardButton("🔄 𝖳𝗋𝗒 𝖠𝗀𝖺𝗂𝗇 🔄", url=f"<https://t.me/{temp.U_NAME}?start={message.command>[1]}")])
         await client.send_message(
             chat_id=message.from_user.id,
             text="**Please Join My Updates Channel to use this Bot!**",
             reply_markup=InlineKeyboardMarkup(btn),
             parse_mode=enums.ParseMode.MARKDOWN
-            )
+        )
         return
+
     if len(message.command) == 2 and message.command[1] in ["subscribe", "error", "okay", "help"]:
         buttons = [[
-                    InlineKeyboardButton('🛡 Uᴘᴅᴀᴛᴇ', url=f"t.me/Devilservers"),
-                    InlineKeyboardButton('🧑🏻‍💻 Dᴇᴠᴇʟᴏᴘᴇʀ', url=f"t.me/takinggbot")
-                  ]]
+            InlineKeyboardButton('🛡 Uᴘᴅᴀᴛᴇ', url=f"t.me/Devilservers"),
+            InlineKeyboardButton('🧑🏻‍💻 Dᴇᴠᴇʟᴏᴘᴇʀ', url=f"t.me/takinggbot")
+        ]]
         reply_markup = InlineKeyboardMarkup(buttons)
         await message.reply_photo(
             photo=random.choice(PICS),
@@ -90,28 +95,32 @@ async def start(client, message):
             parse_mode=enums.ParseMode.HTML
         )
         return
+
     data = message.command[1]
     try:
         pre, file_id = data.split('_', 1)
-    except:
+    except Exception:
         file_id = data
         pre = ""
-        
+
     if data.startswith("all"):
         _, key, pre = data.split("_", 2)
         files = temp.FILES_IDS.get(key)
         if not files:
             return await message.reply('<b><i>No such file exist.</b></i>')
-        
         for file in files:
             title = file.file_name
-            size=get_size(file.file_size)
-            f_caption=file.caption
+            size = get_size(file.file_size)
+            f_caption = file.caption
             if CUSTOM_FILE_CAPTION:
                 try:
-                    f_caption=CUSTOM_FILE_CAPTION.format(file_name= '' if title is None else title, file_size='' if size is None else size, file_caption='' if f_caption is None else f_caption)
-                except:
-                    f_caption=f_caption
+                    f_caption = CUSTOM_FILE_CAPTION.format(
+                        file_name='' if title is None else title,
+                        file_size='' if size is None else size,
+                        file_caption='' if f_caption is None else f_caption
+                    )
+                except Exception:
+                    f_caption = f_caption
             if f_caption is None:
                 f_caption = f"{file.file_name}"
             await client.send_cached_media(
@@ -119,34 +128,38 @@ async def start(client, message):
                 file_id=file.file_id,
                 caption=f_caption,
                 protect_content=True if pre == 'filep' else False,
-                reply_markup=InlineKeyboardMarkup( [ [ InlineKeyboardButton('⚔️ DevilServers ⚔️', url=f"https://t.me/DevilServers") ] ] ),
+                reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton('⚔️ DevilServers ⚔️', url="https://t.me/DevilServers")]]),
             )
         return
-    
+
     if data.split("-", 1)[0] == "BATCH":
         sts = await message.reply("<b>Please wait...</b>")
         file_id = data.split("-", 1)[1]
         msgs = BATCH_FILES.get(file_id)
         if not msgs:
             file = await client.download_media(file_id)
-            try: 
+            try:
                 with open(file) as file_data:
-                    msgs=json.loads(file_data.read())
-            except:
+                    msgs = json.loads(file_data.read())
+            except Exception:
                 await sts.edit("FAILED")
                 return await client.send_message(LOG_CHANNEL, "UNABLE TO OPEN FILE.")
             os.remove(file)
             BATCH_FILES[file_id] = msgs
         for msg in msgs:
             title = msg.get("title")
-            size=get_size(int(msg.get("size", 0)))
-            f_caption=msg.get("caption", "")
+            size = get_size(int(msg.get("size", 0)))
+            f_caption = msg.get("caption", "")
             if BATCH_FILE_CAPTION:
                 try:
-                    f_caption=BATCH_FILE_CAPTION.format(file_name= '' if title is None else title, file_size='' if size is None else size, file_caption='' if f_caption is None else f_caption)
+                    f_caption = BATCH_FILE_CAPTION.format(
+                        file_name='' if title is None else title,
+                        file_size='' if size is None else size,
+                        file_caption='' if f_caption is None else f_caption
+                    )
                 except Exception as e:
                     logger.exception(e)
-                    f_caption=f_caption
+                    f_caption = f_caption
             if f_caption is None:
                 f_caption = f"{title}"
             try:
@@ -155,8 +168,7 @@ async def start(client, message):
                     file_id=msg.get("file_id"),
                     caption=f_caption,
                     protect_content=msg.get('protect', False),
-                    reply_markup=InlineKeyboardMarkup( [ [ InlineKeyboardButton('⚔️ DevilServers ⚔️', url=f"https://t.me/DevilServers") ] ] ),
-                    
+                    reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton('⚔️ DevilServers ⚔️', url="https://t.me/DevilServers")]]),
                 )
             except FloodWait as e:
                 await asyncio.sleep(e.x)
@@ -166,21 +178,22 @@ async def start(client, message):
                     file_id=msg.get("file_id"),
                     caption=f_caption,
                     protect_content=msg.get('protect', False),
-                    reply_markup=InlineKeyboardMarkup( [ [ InlineKeyboardButton('⚔️ DevilServers ⚔️', url=f"https://t.me/DevilServers") ] ] ),
+                    reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton('⚔️ DevilServers ⚔️', url="https://t.me/DevilServers")]]),
                 )
             except Exception as e:
                 logger.warning(e, exc_info=True)
                 continue
-            await asyncio.sleep(1) 
+            await asyncio.sleep(1)
         await sts.delete()
         return
+
     elif data.split("-", 1)[0] == "DSTORE":
         sts = await message.reply("<b>Please wait...</b>")
         b_string = data.split("-", 1)[1]
         decoded = (base64.urlsafe_b64decode(b_string + "=" * (-len(b_string) % 4))).decode("ascii")
         try:
             f_msg_id, l_msg_id, f_chat_id, protect = decoded.split("_", 3)
-        except:
+        except Exception:
             f_msg_id, l_msg_id, f_chat_id = decoded.split("_", 2)
             protect = "/pbatch" if PROTECT_CONTENT else "batch"
         diff = int(l_msg_id) - int(f_msg_id)
@@ -189,7 +202,11 @@ async def start(client, message):
                 media = getattr(msg, msg.media.value)
                 if BATCH_FILE_CAPTION:
                     try:
-                        f_caption=BATCH_FILE_CAPTION.format(file_name=getattr(media, 'file_name', ''), file_size=getattr(media, 'file_size', ''), file_caption=getattr(msg, 'caption', ''))
+                        f_caption = BATCH_FILE_CAPTION.format(
+                            file_name=getattr(media, 'file_name', ''),
+                            file_size=getattr(media, 'file_size', ''),
+                            file_caption=getattr(msg, 'caption', '')
+                        )
                     except Exception as e:
                         logger.exception(e)
                         f_caption = getattr(msg, 'caption', '')
@@ -216,90 +233,54 @@ async def start(client, message):
                 except Exception as e:
                     logger.exception(e)
                     continue
-            await asyncio.sleep(1) 
+            await asyncio.sleep(1)
         return await sts.delete()
-        
-    
-    async def handle_single_file(pre, file_id):
-        files_ = await get_file_details(file_id)
-        if not files_:
-            try:
-                pre, file_id = ((base64.urlsafe_b64decode(data + "=" * (-len(data) % 4))).decode("ascii")).split("_", 1)
-                msg = await client.send_cached_media(
-                    chat_id=message.from_user.id,
-                    file_id=file_id,
-                    protect_content=True if pre == 'filep' else False,
-                    reply_markup=InlineKeyboardMarkup(
-                        [[InlineKeyboardButton('⚔️ DevilServers ⚔️', url="https://t.me/DevilServers")]]
-                    ),
-                )
-                filetype = msg.media
-                file = getattr(msg, filetype.value)
-                title = file.file_name
-                size = get_size(file.file_size)
-                f_caption = f"<code>{title}</code>"
-                if CUSTOM_FILE_CAPTION:
-                    try:
-                        f_caption = CUSTOM_FILE_CAPTION.format(
-                            file_name=title or '', file_size=size or '', file_caption=''
-                        )
-                    except:
-                        return
-                await msg.edit_caption(f_caption)
-                return
-            except:
-                return await message.reply('<b><i>No such file exist.</b></i>')
-        files = files_[0]
-        title = files.file_name
-        size = get_size(files.file_size)
-        f_caption = files.caption
-        if CUSTOM_FILE_CAPTION:
-            try:
-                f_caption = CUSTOM_FILE_CAPTION.format(
-                    file_name=title or '', file_size=size or '', file_caption=f_caption or ''
-                )
-            except Exception as e:
-                logger.exception(e)
-        if f_caption is None:
-            f_caption = f"{files.file_name}"
-        await client.send_cached_media(
-            chat_id=message.from_user.id,
-            file_id=file_id,
-            caption=f_caption,
-            protect_content=True if pre == 'filep' else False,
-            reply_markup=InlineKeyboardMarkup(
-                [[InlineKeyboardButton('⚔️ DevilServers ⚔️', url="https://t.me/DevilServers")]]
-            ),
-        )
 
-    await handle_single_file(pre, file_id)
- ] ] ),
+    
+    files_ = await get_file_details(file_id)
+    if not files_:
+        pre, file_id = ((base64.urlsafe_b64decode(data + "=" * (-len(data) % 4))).decode("ascii")).split("_", 1)
+        try:
+            msg = await client.send_cached_media(
+                chat_id=message.from_user.id,
+                file_id=file_id,
+                protect_content=True if pre == 'filep' else False,
+                reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton('⚔️ DevilServers ⚔️', url="https://t.me/DevilServers")]]),
             )
             filetype = msg.media
             file = getattr(msg, filetype.value)
             title = file.file_name
-            size=get_size(file.file_size)
+            size = get_size(file.file_size)
             f_caption = f"<code>{title}</code>"
             if CUSTOM_FILE_CAPTION:
                 try:
-                    f_caption=CUSTOM_FILE_CAPTION.format(file_name= '' if title is None else title, file_size='' if size is None else size, file_caption='')
-                except:
+                    f_caption = CUSTOM_FILE_CAPTION.format(
+                        file_name='' if title is None else title,
+                        file_size='' if size is None else size,
+                        file_caption=''
+                    )
+                except Exception:
                     return
             await msg.edit_caption(f_caption)
             return
-        except:
+        except Exception:
             pass
         return await message.reply('<b><i>No such file exist.</b></i>')
+
     files = files_[0]
     title = files.file_name
-    size=get_size(files.file_size)
-    f_caption=files.caption
+    size = get_size(files.file_size)
+    f_caption = files.caption
     if CUSTOM_FILE_CAPTION:
         try:
-            f_caption=CUSTOM_FILE_CAPTION.format(file_name= '' if title is None else title, file_size='' if size is None else size, file_caption='' if f_caption is None else f_caption)
+            f_caption = CUSTOM_FILE_CAPTION.format(
+                file_name='' if title is None else title,
+                file_size='' if size is None else size,
+                file_caption='' if f_caption is None else f_caption
+            )
         except Exception as e:
             logger.exception(e)
-            f_caption=f_caption
+            f_caption = f_caption
     if f_caption is None:
         f_caption = f"{files.file_name}"
     await client.send_cached_media(
@@ -307,7 +288,7 @@ async def start(client, message):
         file_id=file_id,
         caption=f_caption,
         protect_content=True if pre == 'filep' else False,
-        reply_markup=InlineKeyboardMarkup( [ [ InlineKeyboardButton('⚔️ DevilServers ⚔️', url="https://t.me/DevilServers") ] ] ),
+        reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton('⚔️ DevilServers ⚔️', url="https://t.me/DevilServers")]]),
     )
     
 @Client.on_message(filters.command('channel') & filters.user(ADMINS))
