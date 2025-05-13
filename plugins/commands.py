@@ -219,15 +219,61 @@ async def start(client, message):
             await asyncio.sleep(1) 
         return await sts.delete()
         
-    files_ = await get_file_details(file_id)           
-    if not files_:
-        pre, file_id = ((base64.urlsafe_b64decode(data + "=" * (-len(data) % 4))).decode("ascii")).split("_", 1)
-        try:
-            msg = await client.send_cached_media(
-                chat_id=message.from_user.id,
-                file_id=file_id,
-                protect_content=True if pre == 'filep' else False,
-                reply_markup=InlineKeyboardMarkup( [ [ InlineKeyboardButton('⚔️ DevilServers ⚔️', url="https://t.me/DevilServers") ] ] ),
+    
+    async def handle_single_file(pre, file_id):
+        files_ = await get_file_details(file_id)
+        if not files_:
+            try:
+                pre, file_id = ((base64.urlsafe_b64decode(data + "=" * (-len(data) % 4))).decode("ascii")).split("_", 1)
+                msg = await client.send_cached_media(
+                    chat_id=message.from_user.id,
+                    file_id=file_id,
+                    protect_content=True if pre == 'filep' else False,
+                    reply_markup=InlineKeyboardMarkup(
+                        [[InlineKeyboardButton('⚔️ DevilServers ⚔️', url="https://t.me/DevilServers")]]
+                    ),
+                )
+                filetype = msg.media
+                file = getattr(msg, filetype.value)
+                title = file.file_name
+                size = get_size(file.file_size)
+                f_caption = f"<code>{title}</code>"
+                if CUSTOM_FILE_CAPTION:
+                    try:
+                        f_caption = CUSTOM_FILE_CAPTION.format(
+                            file_name=title or '', file_size=size or '', file_caption=''
+                        )
+                    except:
+                        return
+                await msg.edit_caption(f_caption)
+                return
+            except:
+                return await message.reply('<b><i>No such file exist.</b></i>')
+        files = files_[0]
+        title = files.file_name
+        size = get_size(files.file_size)
+        f_caption = files.caption
+        if CUSTOM_FILE_CAPTION:
+            try:
+                f_caption = CUSTOM_FILE_CAPTION.format(
+                    file_name=title or '', file_size=size or '', file_caption=f_caption or ''
+                )
+            except Exception as e:
+                logger.exception(e)
+        if f_caption is None:
+            f_caption = f"{files.file_name}"
+        await client.send_cached_media(
+            chat_id=message.from_user.id,
+            file_id=file_id,
+            caption=f_caption,
+            protect_content=True if pre == 'filep' else False,
+            reply_markup=InlineKeyboardMarkup(
+                [[InlineKeyboardButton('⚔️ DevilServers ⚔️', url="https://t.me/DevilServers")]]
+            ),
+        )
+
+    await handle_single_file(pre, file_id)
+ ] ] ),
             )
             filetype = msg.media
             file = getattr(msg, filetype.value)
@@ -769,7 +815,7 @@ async def send_chatmsg(bot, message):
             await message.reply_text(f"<b>Error :- <code>{e}</code></b>")
     else:
         await message.reply_text("<b>Error𝖢𝗈𝗆𝗆𝖺𝗇𝖽 𝖨𝗇𝖼𝗈𝗆𝗉𝗅𝖾𝗍𝖾 !</b>")
-
+                
 @Client.on_message(filters.command("deletefiles") & filters.user(ADMINS))
 async def deletemultiplefiles(bot, message):
     chat_type = message.chat.type
@@ -796,4 +842,4 @@ async def deletemultiplefiles(bot, message):
         if result.deleted_count:
             logger.info(f'File Found for your query {keyword}! Successfully deleted {file_name} from database.')
         deleted += 1
-    await k.edit_text(text=f"<b>Process Completed for file deletion !\n\nSuccessfully deleted {str(deleted)} files from database for your query {keyword}.</b>")
+    await k.edit_text(text=f"<b>Process Completed for file deletion !\n\nSuccessfully deleted {str(deleted)} files from database for your query {keyword}.</b>")     
